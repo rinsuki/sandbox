@@ -1,3 +1,4 @@
-# 購読の催促がウザい
-
+! Title: 快適なインターネットライフ用フィルタ
+! Homepage: https://rinsuki.net/sandbox/adblock-filters/
+!---プッシュ通知系---!
 ||sdk.push7.jp/*
