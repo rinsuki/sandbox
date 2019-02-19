@@ -4,4 +4,4 @@
 
 ## おしながき
 
-- [AdBlock Plus系用フィルタ](adblock-filters/)
+- [Misskey関連](misskey/)
