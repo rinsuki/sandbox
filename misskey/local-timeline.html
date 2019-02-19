@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="robots" content="noindex,nofollow">
+        <title>MisskeyのLTLが無くなったから疑似的にLTLを復活させるスレ</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.22/vue.js"></script>
+    </head>
+    <body style="background: #EEE">
+        <div id="app">
+            <h1 style="font-size: larger;color: red;font-weight: normal;">MisskeyのLTLが無くなったから疑似的にLTLを復活させるスレ</h1>
+            <dl v-for="post in posts">
+                <div v-if="post instanceof Date" style="background: #333;color: #eee;">
+                    ここから上は{{ post }}に取得
+                </div>
+                <template v-else>
+                    <dt>
+                        名前：<a v-bind:href="`https://misskey.xyz/@${post.user.username}`"><b>{{ post.user.name }}</b>&nbsp;@{{ post.user.username}}</a>：{{ post.createdAt }} ID: {{ post.id }}
+                    </dt>
+                    <dd>
+                        <span style="white-space: pre">{{ post.text }}</span>
+                    </dd>
+                </template>
+            </dl>
+        </div>
+        <script>
+            const ws = new WebSocket("wss://misskey.xyz/streaming")
+            const wsPromise = new Promise((resolve, reject) => {
+                ws.onopen = resolve
+            })
+            ws.addEventListener("message", e => {
+                const json = JSON.parse(e.data)
+                console.log(json)
+                if (json.type !== "channel") return
+                if (json.body.id !== "1") return
+                if (json.body.type !== "note") return
+                if (json.body.body.user.host != null) return
+                if (json.body.body.renote != null) return
+                app.posts = [json.body.body, ...app.posts]
+            })
+            const app = new Vue({
+                el: "#app",
+                data: {
+                    posts: [],
+                    loading: true,
+                },
+                async mounted() {
+                    await wsPromise
+                    const res = await fetch("https://misskey.xyz/api/notes", {
+                        method: "POST",
+                        body: JSON.stringify({
+                            local: true,
+                            renote: false,
+                            limit: 20
+                        }),
+                        headers: {
+                            "Content-Type": "application/json"
+                        }
+                    })
+                    const json = await res.json()
+                    this.posts = json
+                    this.loading = false
+                    ws.send(JSON.stringify({type: "connect", body: {channel: "globalTimeline", id: "1"}}))
+                },
+            })
+        </script>
+    </body>
+</html>
